@@ -2,6 +2,11 @@ import { useEffect } from 'react';
 import { NavLink, Navigate, Route, Routes } from 'react-router-dom';
 import { applyTheme, useSettings } from './db';
 import { cx } from './components/ui';
+import LiftHome from './pages/lift/LiftHome';
+import RoutineEdit from './pages/lift/RoutineEdit';
+import Session from './pages/lift/Session';
+import { ExerciseStats, History, WorkoutDetail } from './pages/lift/History';
+import Settings from './pages/Settings';
 
 function Placeholder({ name }: { name: string }) {
   return <div className="p-6 text-xl font-bold">{name}</div>;
@@ -38,7 +43,13 @@ export default function App() {
       <div className="flex-1 overflow-y-auto overflow-x-hidden" id="scroll">
         <Routes>
           <Route path="/" element={<Navigate to="/lift" replace />} />
-          <Route path="/lift/*" element={<Placeholder name="LIFT" />} />
+          <Route path="/lift" element={<LiftHome />} />
+          <Route path="/lift/routine/:id" element={<RoutineEdit />} />
+          <Route path="/lift/session" element={<Session />} />
+          <Route path="/lift/history" element={<History />} />
+          <Route path="/lift/workout/:id" element={<WorkoutDetail />} />
+          <Route path="/lift/exercise/:id" element={<ExerciseStats />} />
+          <Route path="/settings" element={<Settings />} />
           <Route path="/fuel/*" element={<Placeholder name="FUEL" />} />
           <Route path="*" element={<Navigate to="/lift" replace />} />
         </Routes>

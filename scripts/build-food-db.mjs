@@ -112,6 +112,19 @@ for (const ds of DATASETS) {
   console.log(`${ds.key}: ${raw.length} foods, kept ${kept}`);
 }
 
+// The same description can appear in both datasets. Keep the newer Foundation entry, but borrow
+// household portion weights from its SR Legacy twin when Foundation has none.
+const byName = new Map();
+for (const f of foods) {
+  const prev = byName.get(f[1]);
+  if (!prev) { byName.set(f[1], f); continue; }
+  if (prev[5].length === 0) prev[5] = f[5];
+  f.dup = true;
+}
+const before = foods.length;
+for (let i = foods.length - 1; i >= 0; i--) if (foods[i].dup) foods.splice(i, 1);
+console.log(`merged ${before - foods.length} duplicate descriptions`);
+
 const json = JSON.stringify({
   version: 1,
   source: 'USDA FoodData Central: Foundation Foods (2025-12) and SR Legacy (2018-04). Public domain.',
