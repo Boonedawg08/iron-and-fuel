@@ -1,10 +1,10 @@
 import { useLiveQuery } from 'dexie-react-hooks';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
-import { Btn, Card, Empty, NumField, Page, Seg, Sheet, confirmDialog, cx } from '../../components/ui';
+import { Btn, Card, Empty, IconBtn, NumField, Page, Seg, Sheet, confirmDialog, cx } from '../../components/ui';
 import { SLOTS, db, uid, type Food, type SavedMeal, type Slot } from '../../db';
 import { prettyDate, ymd } from '../../lib/date';
-import { isConfident, resolveGrams, scaleNutrients, search, siblingsOf, stateNote, sumNutrients, type SearchHit } from '../../lib/foodSearch';
+import { isConfident, resolveGrams, scaleNutrients, search, siblingsOf, stateNote, sumNutrients } from '../../lib/foodSearch';
 import { useFoodDb } from '../../lib/foodStore';
 import { SLOT_LABEL, addToLog, defaultSlot } from '../../lib/fuel';
 import { parseMeal, type ParsedItem } from '../../lib/parser';
@@ -15,7 +15,6 @@ interface Draft {
   /** What the user typed for this item (empty when added from search). */
   raw: string;
   item?: ParsedItem;
-  hits: SearchHit[];
   food?: Food;
   grams?: number;
   /** The automatic match is not trustworthy; the user must confirm or swap it before saving. */
@@ -29,10 +28,30 @@ interface Draft {
 function draftFromParsed(item: ParsedItem): Draft {
   const hits = search(item.food, 12);
   const top = hits[0];
-  const base = { key: uid(), raw: item.raw, item, hits, confirmed: false };
+  const base = { key: uid(), raw: item.raw, item, confirmed: false };
   if (!top) return { ...base, lowConfidence: true, approx: false, note: '', state: '' };
   const g = resolveGrams(item, top.food, siblingsOf(hits, top.food));
   return { ...base, food: top.food, grams: g.grams, approx: g.approx, note: g.note, lowConfidence: !isConfident(top), state: stateNote(top.food, item.food) };
+}
+
+type Tab = 'describe' | 'search' | 'saved';
+/**
+ * The meal being put together is kept in localStorage, so it survives leaving to create a custom
+ * food, the phone reloading the app in the background, and app updates. It expires after 12 hours.
+ */
+interface StoredDraft { date: string; at: number; tab: Tab; slot: Slot; text: string; mealName: string; drafts: Draft[] }
+const DRAFT_KEY = 'iron-and-fuel:meal-draft';
+function loadDraft(date: string): StoredDraft | null {
+  try {
+    const d = JSON.parse(localStorage.getItem(DRAFT_KEY) ?? 'null') as StoredDraft | null;
+    return d && d.date === date && Date.now() - d.at < 12 * 3600 * 1000 && Array.isArray(d.drafts) ? d : null;
+  } catch { return null; }
+}
+function storeDraft(d: StoredDraft | null): void {
+  try {
+    if (d && (d.drafts.length > 0 || d.text.trim())) localStorage.setItem(DRAFT_KEY, JSON.stringify(d));
+    else localStorage.removeItem(DRAFT_KEY);
+  } catch { /* storage full or blocked: the draft just won't survive a reload */ }
 }
 
 export default function LogMeal() {
@@ -40,13 +59,15 @@ export default function LogMeal() {
   const [params] = useSearchParams();
   const date = params.get('d') ?? ymd();
   const foodDb = useFoodDb();
-  const [tab, setTab] = useState<'describe' | 'search' | 'saved'>('describe');
-  const [slot, setSlot] = useState<Slot>((params.get('slot') as Slot) || defaultSlot());
-  const [text, setText] = useState('');
-  const [drafts, setDrafts] = useState<Draft[]>([]);
+  const [stored] = useState(() => loadDraft(date));
+  const [tab, setTab] = useState<Tab>(stored?.tab ?? 'describe');
+  const [slot, setSlot] = useState<Slot>((params.get('slot') as Slot) || stored?.slot || defaultSlot());
+  const [text, setText] = useState(stored?.text ?? '');
+  const [drafts, setDrafts] = useState<Draft[]>(stored?.drafts ?? []);
   const [swapping, setSwapping] = useState<string | null>(null);
   const [picked, setPicked] = useState<Food | null>(null);
-  const [mealName, setMealName] = useState('');
+  const [mealName, setMealName] = useState(stored?.mealName ?? '');
+  useEffect(() => { storeDraft({ date, at: Date.now(), tab, slot, text, mealName, drafts }); }, [date, tab, slot, text, mealName, drafts]);
   const [parseMsg, setParseMsg] = useState('');
   const savedMeals = useLiveQuery(() => db.savedMeals.toArray(), [], [] as SavedMeal[]);
   const customFoods = useLiveQuery(() => db.foods.where('source').equals('custom').toArray(), [], [] as Food[]);
@@ -80,6 +101,7 @@ export default function LogMeal() {
     if (!drafts.length || blocked.length) return;
     const items = ready.map((d) => ({ food: d.food!, grams: d.grams! }));
     await addToLog(date, slot, items);
+    storeDraft(null);
     if (mealName.trim()) {
       await db.savedMeals.add({ id: uid(), name: mealName.trim(), items: items.map((i) => ({ foodId: i.food.id, name: i.food.name, grams: i.grams, per100: i.food.n })) });
     }
@@ -132,7 +154,7 @@ export default function LogMeal() {
                     <div className="tnum text-xs text-mute">{Math.round(t.kcal ?? 0)} kcal · P {Math.round(t.protein ?? 0)} · C {Math.round(t.carbs ?? 0)} · F {Math.round(t.fat ?? 0)} · {m.items.length} items</div>
                   </div>
                   <Btn kind="primary" small onClick={() => void logSaved(m)} label={`Log ${m.name}`}>Log</Btn>
-                  <button aria-label={`Delete ${m.name}`} className="h-11 w-9 text-bad" onClick={() => { if (confirmDialog(`Delete saved meal "${m.name}"?`)) void db.savedMeals.delete(m.id); }}>✕</button>
+                  <IconBtn label={`Delete ${m.name}`} className="-mr-2 text-bad" onClick={() => { if (confirmDialog(`Delete saved meal "${m.name}"?`)) void db.savedMeals.delete(m.id); }}>✕</IconBtn>
                 </div>
               </Card>
             );
@@ -144,7 +166,7 @@ export default function LogMeal() {
                 <span className="block truncate font-medium">{f.name}</span>
                 <span className="tnum block text-xs text-mute">{Math.round(f.n.kcal ?? 0)} kcal per 100 g</span>
               </button>
-              <Link to={`/fuel/food/${encodeURIComponent(f.id)}`} className="grid h-11 place-items-center px-2 text-sm text-accent">Edit</Link>
+              <Link to={`/fuel/food/${encodeURIComponent(f.id)}`} className="grid h-11 min-w-[44px] place-items-center px-2 text-sm font-medium text-accent">Edit</Link>
             </div>
           ))}
           <Btn full to="/fuel/food/new">+ New custom food</Btn>
@@ -162,7 +184,7 @@ export default function LogMeal() {
                 {d.raw && <div className="text-xs text-mute">You wrote: “{d.raw}”</div>}
                 <div className="font-semibold leading-snug">{d.food ? d.food.name : 'No match found'}{d.food?.brand ? <span className="font-normal text-mute"> · {d.food.brand}</span> : null}</div>
               </div>
-              <button aria-label="Remove item" onClick={() => setDrafts((ds) => ds.filter((x) => x.key !== d.key))} className="-mr-1 -mt-1 grid h-11 w-9 shrink-0 place-items-center text-bad">✕</button>
+              <IconBtn label="Remove item" onClick={() => setDrafts((ds) => ds.filter((x) => x.key !== d.key))} className="-mr-2 -mt-2 text-bad">✕</IconBtn>
             </div>
 
             {d.food && (
@@ -179,13 +201,17 @@ export default function LogMeal() {
             {d.note && <p className={cx('mt-2 text-xs', d.approx ? 'text-warn' : 'text-mute')}>{d.approx ? '⚠ ' : ''}{d.note}</p>}
             {d.state && <p className="mt-1 text-xs text-mute">{d.state}</p>}
 
-            {needs && d.food && (
-              <label className="mt-2 flex min-h-[44px] items-center gap-3 rounded-xl border border-warn/60 bg-warn/10 px-3 text-sm">
-                <input type="checkbox" className="h-6 w-6 shrink-0 accent-[rgb(var(--accent))]" checked={d.confirmed} onChange={(e) => patch(d.key, { confirmed: e.target.checked })} />
+            {(d.lowConfidence || d.approx) && d.food && (
+              <label className={cx('mt-2 flex min-h-[44px] items-center gap-3 rounded-xl border px-3 py-1.5 text-sm',
+                d.confirmed ? 'border-good/50 bg-good/10' : 'border-warn/60 bg-warn/10')}>
+                <input type="checkbox" className="h-6 w-6 shrink-0 accent-[rgb(var(--accent))]" checked={d.confirmed}
+                  onChange={(e) => patch(d.key, { confirmed: e.target.checked })} />
                 <span>
-                  {d.lowConfidence
-                    ? <><b>Not sure about this match.</b> Tick to confirm it's right, or swap it.</>
-                    : <><b>The amount is a guess.</b> Tick to accept it, or fix the grams.</>}
+                  {d.confirmed
+                    ? <><b>Confirmed by you.</b> Untick if you want to look again.</>
+                    : d.lowConfidence
+                      ? <><b>Not sure about this match.</b> Tick to confirm it's right, or swap it.</>
+                      : <><b>The amount is a guess.</b> Tick to accept it, or fix the grams.</>}
                 </span>
               </label>
             )}
@@ -213,7 +239,7 @@ export default function LogMeal() {
       <Sheet open={!!picked} onClose={() => setPicked(null)} title="How much?">
         {picked && (
           <AmountForm key={picked.id} food={picked} cta="Add to meal" onAdd={(grams) => {
-            setDrafts((ds) => [...ds, { key: uid(), raw: '', hits: [], food: picked, grams, lowConfidence: false, confirmed: true, approx: false, note: '', state: '' }]);
+            setDrafts((ds) => [...ds, { key: uid(), raw: '', food: picked, grams, lowConfidence: false, confirmed: true, approx: false, note: '', state: '' }]);
             setPicked(null);
           }} />
         )}

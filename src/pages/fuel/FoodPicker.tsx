@@ -57,7 +57,7 @@ export function FoodPicker(props: { initialQuery?: string; onPick: (food: Food) 
               <div className="divide-y divide-line">{online.foods.map((f) => <FoodRow key={f.id} food={f} onPick={() => props.onPick(f)} />)}</div>
             </div>
           )}
-          <Link to="/fuel/food/new" className="block py-2 text-center text-sm font-medium text-accent">Can't find it? Create a custom food</Link>
+          <Link to="/fuel/food/new" className="flex min-h-[44px] items-center justify-center text-sm font-medium text-accent">Can't find it? Create a custom food</Link>
         </>
       )}
     </div>

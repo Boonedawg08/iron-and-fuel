@@ -1,8 +1,8 @@
 import { useLiveQuery } from 'dexie-react-hooks';
 import { useState } from 'react';
 import { LineChart } from '../../components/Chart';
-import { Btn, Card, Empty, NumField, Page } from '../../components/ui';
-import { db, useSettings, type BodyWeight } from '../../db';
+import { Btn, Card, Empty, IconBtn, NumField, Page } from '../../components/ui';
+import { db, saveProfile, useProfile, useSettings, type BodyWeight } from '../../db';
 import { parseYmd, shortDate, ymd } from '../../lib/date';
 import { fromKg, toKg } from '../../lib/units';
 
@@ -11,6 +11,10 @@ export default function WeightLog() {
   const [date, setDate] = useState(ymd());
   const [w, setW] = useState<number | undefined>();
   const rows = useLiveQuery(() => db.bodyWeights.orderBy('date').toArray(), [], [] as BodyWeight[]);
+  const profile = useProfile();
+  // Calorie targets are calculated from the weight in the goal setup; offer to bring it up to date.
+  const latest = rows[rows.length - 1];
+  const stale = !!profile && !!latest && Math.abs(latest.weightKg - profile.weightKg) >= 0.5;
 
   const add = async () => {
     if (!w) return;
@@ -38,6 +42,15 @@ export default function WeightLog() {
         <Btn kind="primary" full disabled={!w} onClick={add}>Save weight</Btn>
       </Card>
 
+      {stale && profile && latest && (
+        <Card className="space-y-2">
+          <p className="text-sm">
+            Your calorie targets are based on <b>{fromKg(profile.weightKg, units, 1)} {units}</b>. Your latest weigh-in is <b>{fromKg(latest.weightKg, units, 1)} {units}</b>.
+          </p>
+          <Btn full small onClick={() => void saveProfile({ ...profile, weightKg: latest.weightKg })}>Recalculate targets with {fromKg(latest.weightKg, units, 1)} {units}</Btn>
+        </Card>
+      )}
+
       {rows.length === 0 ? <Empty>Log your weight now and then to see the trend. It's optional.</Empty> : (
         <>
           <Card>
@@ -53,7 +66,7 @@ export default function WeightLog() {
                 <li key={r.date} className="flex min-h-[44px] items-center gap-2">
                   <span className="flex-1 text-mute">{parseYmd(r.date).toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' })}</span>
                   <span className="font-semibold">{fromKg(r.weightKg, units, 1)} {units}</span>
-                  <button aria-label={`Delete ${r.date}`} className="h-11 w-9 text-bad" onClick={() => void db.bodyWeights.delete(r.date)}>✕</button>
+                  <IconBtn label={`Delete ${r.date}`} className="-mr-2 text-bad" onClick={() => void db.bodyWeights.delete(r.date)}>✕</IconBtn>
                 </li>
               ))}
             </ul>

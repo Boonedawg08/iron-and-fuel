@@ -24,11 +24,15 @@ export default function Settings() {
       </Card>
 
       <Card className="space-y-3">
-        <h2 className="font-bold">Rest timer</h2>
+        <h2 className="font-bold">Workout</h2>
+        <span className="label">Rest timer</span>
         <Seg label="Rest timer" value={s.restTimerOn ? 'on' : 'off'} onChange={(v) => void saveSettings({ restTimerOn: v === 'on' })}
           options={[{ value: 'on', label: 'Start when I check a set' }, { value: 'off', label: 'Off' }]} />
         <div><label className="label" htmlFor="rest">Rest length (seconds)</label>
           <NumField id="rest" decimal={false} value={s.restSeconds} onChange={(n) => { if (n && n >= 5) void saveSettings({ restSeconds: Math.min(900, n) }); }} /></div>
+        <div><span className="label">Screen during a workout</span>
+          <Seg label="Screen during a workout" value={s.keepAwake ? 'on' : 'off'} onChange={(v) => void saveSettings({ keepAwake: v === 'on' })}
+            options={[{ value: 'on', label: 'Keep screen on' }, { value: 'off', label: 'Let it sleep' }]} /></div>
       </Card>
 
       <Card className="space-y-3">

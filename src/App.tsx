@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { NavLink, Navigate, Route, Routes } from 'react-router-dom';
+import { NavLink, Navigate, Route, Routes, useLocation } from 'react-router-dom';
 import { applyTheme, useSettings } from './db';
 import { cx } from './components/ui';
 import LiftHome from './pages/lift/LiftHome';
@@ -16,19 +16,41 @@ import Weekly from './pages/fuel/Weekly';
 import WeightLog from './pages/fuel/WeightLog';
 import { foodsReady } from './lib/foodStore';
 
-function Tab(props: { to: string; label: string; icon: string }) {
+const ICONS = {
+  lift: (
+    <svg viewBox="0 0 24 24" className="h-6 w-6" fill="currentColor" aria-hidden>
+      <rect x="7" y="10.75" width="10" height="2.5" rx="1" />
+      <rect x="4" y="6.5" width="2.5" height="11" rx="1.1" /><rect x="17.5" y="6.5" width="2.5" height="11" rx="1.1" />
+      <rect x="1.2" y="8.75" width="2" height="6.5" rx="0.9" /><rect x="20.8" y="8.75" width="2" height="6.5" rx="0.9" />
+    </svg>
+  ),
+  fuel: (
+    <svg viewBox="0 0 24 24" className="h-6 w-6" fill="currentColor" aria-hidden>
+      <path d="M12.6 2c.9 3.4 5 5.2 5 9.6A5.6 5.6 0 0 1 12 17.2a5.6 5.6 0 0 1-5.6-5.6c0-2.3 1.2-3.7 2.3-5 .5 1.4 1.2 1.8 1.8 2-.2-2.5.2-4.5 2.1-6.6zM7 20h10a1 1 0 0 1 0 2H7a1 1 0 0 1 0-2z" />
+    </svg>
+  ),
+};
+
+function Tab(props: { to: string; label: string; icon: keyof typeof ICONS }) {
   return (
     <NavLink
       to={props.to}
       className={({ isActive }) =>
-        cx('flex min-h-[56px] flex-1 flex-col items-center justify-center text-xs font-bold tracking-widest',
+        cx('flex min-h-[56px] flex-1 flex-col items-center justify-center gap-0.5 text-xs font-bold tracking-widest',
           isActive ? 'text-accent' : 'text-mute')
       }
     >
-      <span aria-hidden className="text-xl leading-6">{props.icon}</span>
+      {ICONS[props.icon]}
       {props.label}
     </NavLink>
   );
+}
+
+/** Each screen starts at the top; changing the date or other query values keeps your place. */
+function ScrollReset() {
+  const { pathname } = useLocation();
+  useEffect(() => { document.getElementById('scroll')?.scrollTo(0, 0); }, [pathname]);
+  return null;
 }
 
 export default function App() {
@@ -46,8 +68,11 @@ export default function App() {
   useEffect(() => { const t = setTimeout(() => void foodsReady().catch(() => {}), 800); return () => clearTimeout(t); }, []);
 
   return (
-    <div className="flex h-full flex-col">
-      <div className="flex-1 overflow-y-auto overflow-x-hidden" id="scroll">
+    <div className="flex h-[100dvh] flex-col" style={{ paddingLeft: 'env(safe-area-inset-left)', paddingRight: 'env(safe-area-inset-right)' }}>
+      {/* Installed on iPhone the page runs under the status bar, whose text is always white: keep a dark strip behind it in both themes. */}
+      <div aria-hidden className="shrink-0 bg-[#0b0d10]" style={{ height: 'env(safe-area-inset-top)' }} />
+      <ScrollReset />
+      <div className="flex-1 overflow-y-auto overflow-x-hidden overscroll-contain" id="scroll">
         <Routes>
           <Route path="/" element={<Navigate to="/lift" replace />} />
           <Route path="/lift" element={<LiftHome />} />
@@ -72,8 +97,8 @@ export default function App() {
         className="flex border-t border-line bg-card"
         style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
       >
-        <Tab to="/lift" label="LIFT" icon="🏋️" />
-        <Tab to="/fuel" label="FUEL" icon="🔥" />
+        <Tab to="/lift" label="LIFT" icon="lift" />
+        <Tab to="/fuel" label="FUEL" icon="fuel" />
       </nav>
     </div>
   );

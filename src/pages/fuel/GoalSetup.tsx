@@ -108,7 +108,7 @@ export default function GoalSetup() {
           {calc.floored && <p className="text-sm text-mute">Raised to the {calc.auto.kcal} kcal minimum, since the calculation came out lower.</p>}
 
           <details className="rounded-xl border border-line p-2" open={calc.overridden.length > 0}>
-            <summary className="min-h-[36px] cursor-pointer font-medium">Override targets manually</summary>
+            <summary className="flex min-h-[44px] cursor-pointer items-center font-medium">Override targets manually</summary>
             <p className="my-2 text-sm text-mute">Leave a box empty to use the calculated value.</p>
             <div className="grid grid-cols-2 gap-2">
               {([['kcal', 'Calories'], ['protein', 'Protein (g)'], ['carbs', 'Carbs (g)'], ['fat', 'Fat (g)']] as const).map(([k, label]) => (

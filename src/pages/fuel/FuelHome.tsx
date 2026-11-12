@@ -49,7 +49,8 @@ export default function FuelHome() {
         <label className="relative flex min-h-[44px] flex-1 items-center justify-center rounded-xl border border-line bg-card font-semibold">
           {prettyDate(date)}
           <input type="date" aria-label="Pick a date" value={date} max="2100-01-01" onChange={(e) => e.target.value && setDate(e.target.value)}
-            className="absolute inset-0 h-full w-full cursor-pointer opacity-0" />
+            onClick={(e) => { try { e.currentTarget.showPicker?.(); } catch { /* the native picker opens on its own */ } }}
+            className="absolute -inset-px h-[calc(100%+2px)] w-[calc(100%+2px)] cursor-pointer opacity-0" />
         </label>
         <button aria-label="Next day" onClick={() => setDate(addDays(date, 1))} className="h-11 w-11 rounded-full text-2xl text-mute active:bg-line">›</button>
       </div>
@@ -61,7 +62,7 @@ export default function FuelHome() {
         <Progress label="Fat" unit="g" value={t.fat ?? 0} target={target.fat} />
         {extras.length > 0 && (
           <details>
-            <summary className="min-h-[36px] cursor-pointer text-sm font-medium text-accent">Fiber, sugar, sodium and micronutrients</summary>
+            <summary className="flex min-h-[44px] cursor-pointer items-center text-sm font-medium text-accent">Fiber, sugar, sodium and micronutrients</summary>
             <dl className="tnum mt-1 grid grid-cols-2 gap-x-4 gap-y-1 text-sm">
               {extras.map((k) => (
                 <div key={k} className="flex justify-between gap-2"><dt className="text-mute">{NUTRIENT_INFO[k].label}</dt>

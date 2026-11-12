@@ -48,7 +48,7 @@ export async function loadDemoData(): Promise<void> {
   await db.workouts.bulkAdd(workouts);
 
   if (!(await db.kv.get('profile'))) {
-    await db.kv.put({ key: 'profile', value: { weightKg: lbToKg(180), heightCm: 178, age: 30, sex: 'male', activity: 'moderate', goal: 'leanBulk', paceLbPerWeek: 0.5, overrides: {} } });
+    await db.kv.put({ key: 'profile', value: { weightKg: lbToKg(180), heightCm: 178, age: 30, sex: 'male', activity: 'moderate', goal: 'lose', paceLbPerWeek: 1, overrides: {} } });
   }
 
   const meals: [Slot, string, number][] = [

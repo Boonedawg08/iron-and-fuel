@@ -101,10 +101,12 @@ export interface Settings {
   theme: 'system' | 'light' | 'dark';
   restTimerOn: boolean;
   restSeconds: number;
+  /** Keep the screen on while a workout is open (where the phone supports it). */
+  keepAwake: boolean;
   fdcApiKey: string;
 }
 export const DEFAULT_SETTINGS: Settings = {
-  units: 'lb', theme: 'system', restTimerOn: true, restSeconds: 90, fdcApiKey: '',
+  units: 'lb', theme: 'system', restTimerOn: true, restSeconds: 90, keepAwake: true, fdcApiKey: '',
 };
 
 interface KV { key: string; value: unknown }

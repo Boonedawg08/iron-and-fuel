@@ -29,7 +29,9 @@ export function LineChart(props: { title: string; unit: string; points: Point[];
   const py = (y: number) => T + (1 - (y - lo) / (hi - lo)) * (H - T - B);
   const path = points.map((p, i) => `${i ? 'L' : 'M'}${px(p.x).toFixed(1)} ${py(p.y).toFixed(1)}`).join(' ');
   const ticks = [lo + pad, (lo + hi) / 2, hi - pad];
-  const fmt = (n: number) => (Math.abs(n) >= 10000 ? `${(n / 1000).toFixed(1)}k` : String(Math.round(n * 10) / 10));
+  // Whole numbers once values are large; one decimal for small ones (body weight, light dumbbells).
+  const fmt = (n: number) => (Math.abs(n) >= 1000 ? Math.round(n).toLocaleString() : String(Math.round(n * 10) / 10));
+  const tick = (n: number) => (hi - lo >= 8 ? Math.round(n).toLocaleString() : String(Math.round(n * 10) / 10));
   const cur = sel === null ? points.length - 1 : sel;
 
   const pick = (clientX: number, el: SVGSVGElement) => {
@@ -57,7 +59,7 @@ export function LineChart(props: { title: string; unit: string; points: Point[];
         {ticks.map((t, i) => (
           <g key={i}>
             <line x1={L} x2={W - R} y1={py(t)} y2={py(t)} stroke="rgb(var(--line))" strokeWidth="1" />
-            <text x={L - 6} y={py(t) + 4} textAnchor="end" fontSize="10" fill="rgb(var(--mute))">{fmt(t)}</text>
+            <text x={L - 6} y={py(t) + 4} textAnchor="end" fontSize="10" fill="rgb(var(--mute))">{tick(t)}</text>
           </g>
         ))}
         <text x={L} y={H - 5} fontSize="10" fill="rgb(var(--mute))">{points[0].label}</text>
@@ -65,11 +67,11 @@ export function LineChart(props: { title: string; unit: string; points: Point[];
           <text x={W - R} y={H - 5} fontSize="10" textAnchor="end" fill="rgb(var(--mute))">{points[points.length - 1].label}</text>
         )}
         <line x1={px(points[cur].x)} x2={px(points[cur].x)} y1={T} y2={H - B} stroke="rgb(var(--mute))" strokeWidth="1" strokeDasharray="3 3" />
-        <path d={path} fill="none" stroke="rgb(var(--accent))" strokeWidth="2" strokeLinejoin="round" strokeLinecap="round" />
+        <path d={path} fill="none" stroke="rgb(var(--chart))" strokeWidth="2" strokeLinejoin="round" strokeLinecap="round" />
         {points.length <= 24 && points.map((p, i) => (
-          <circle key={i} cx={px(p.x)} cy={py(p.y)} r="3" fill="rgb(var(--accent))" stroke="rgb(var(--card))" strokeWidth="1.5" />
+          <circle key={i} cx={px(p.x)} cy={py(p.y)} r="3" fill="rgb(var(--chart))" stroke="rgb(var(--card))" strokeWidth="1.5" />
         ))}
-        <circle cx={px(points[cur].x)} cy={py(points[cur].y)} r="5" fill="rgb(var(--accent))" stroke="rgb(var(--card))" strokeWidth="2" />
+        <circle cx={px(points[cur].x)} cy={py(points[cur].y)} r="5" fill="rgb(var(--chart))" stroke="rgb(var(--card))" strokeWidth="2" />
       </svg>
     </figure>
   );

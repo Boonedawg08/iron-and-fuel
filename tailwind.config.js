@@ -12,6 +12,7 @@ export default {
         ink: 'rgb(var(--ink) / <alpha-value>)',
         mute: 'rgb(var(--mute) / <alpha-value>)',
         accent: 'rgb(var(--accent) / <alpha-value>)',
+        chart: 'rgb(var(--chart) / <alpha-value>)',
         good: 'rgb(var(--good) / <alpha-value>)',
         warn: 'rgb(var(--warn) / <alpha-value>)',
         bad: 'rgb(var(--bad) / <alpha-value>)',

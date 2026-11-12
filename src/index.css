@@ -10,6 +10,8 @@
   --mute: 95 103 115;
   --accent: 194 65 12;
   --accent-ink: 255 255 255;
+  /* Data marks (chart lines, bars, meters). Each theme's step is validated for lightness and contrast on its own surface. */
+  --chart: 194 65 12;
   --good: 4 120 87;
   --warn: 161 98 7;
   --bad: 200 30 30;
@@ -23,6 +25,7 @@
   --mute: 150 158 172;
   --accent: 249 115 22;
   --accent-ink: 20 10 2;
+  --chart: 234 88 12;
   --good: 52 211 153;
   --warn: 251 191 36;
   --bad: 248 113 113;
@@ -45,7 +48,7 @@ button { touch-action: manipulation; }
 @layer components {
   .field {
     @apply w-full min-h-[44px] rounded-xl border border-line bg-bg px-3 py-2 text-ink
-      placeholder:text-mute focus:outline-none focus:ring-2 focus:ring-accent;
+      placeholder:text-mute/60 focus:outline-none focus:ring-2 focus:ring-accent;
   }
   .label { @apply mb-1 block text-sm font-medium text-mute; }
   .tnum { font-variant-numeric: tabular-nums; }

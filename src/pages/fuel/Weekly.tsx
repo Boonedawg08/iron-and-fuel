@@ -48,7 +48,7 @@ export default function Weekly() {
           </div>
           {days.map((d) => (
             <div key={d.date} className="flex h-full flex-1 flex-col justify-end">
-              <div className={cx('w-full rounded-t', d.logged ? 'bg-accent' : 'bg-line')} style={{ height: `${Math.max(d.logged ? 2 : 1, (d.kcal / maxKcal) * 100)}%` }} title={`${Math.round(d.kcal)} kcal`} />
+              <div className={cx('w-full rounded-t', d.logged ? 'bg-chart' : 'bg-line')} style={{ height: `${Math.max(d.logged ? 2 : 1, (d.kcal / maxKcal) * 100)}%` }} title={`${Math.round(d.kcal)} kcal`} />
             </div>
           ))}
         </div>
@@ -63,7 +63,7 @@ export default function Weekly() {
           <tbody className="divide-y divide-line">
             {days.map((d) => (
               <tr key={d.date}>
-                <td className="py-2"><Link className="text-accent" to={`/fuel?d=${d.date}`}>{parseYmd(d.date).toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' })}</Link></td>
+                <td><Link className="inline-flex min-h-[44px] items-center text-accent" to={`/fuel?d=${d.date}`}>{parseYmd(d.date).toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' })}</Link></td>
                 <td className="text-right">{d.logged ? Math.round(d.kcal) : '–'}</td>
                 <td className="text-right">{d.logged ? `${Math.round(d.protein)} g` : '–'}</td>
                 <td className="text-right">{!d.logged ? <span className="text-mute">not logged</span> : d.hit.both ? <span className="font-semibold text-good">✓ Yes</span> : <span className="text-mute">{d.hit.kcal ? 'protein low' : d.hit.protein ? 'calories off' : 'No'}</span>}</td>

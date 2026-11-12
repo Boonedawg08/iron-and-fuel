@@ -10,20 +10,11 @@ export function Page(props: { title: string; back?: string | true; right?: React
   const nav = useNavigate();
   return (
     <div className="mx-auto w-full max-w-md">
-      <header
-        className="sticky top-0 z-20 flex items-center gap-2 border-b border-line bg-bg/95 px-3 backdrop-blur"
-        style={{ paddingTop: 'env(safe-area-inset-top)' }}
-      >
+      <header className="sticky top-0 z-20 flex h-14 items-center gap-2 border-b border-line bg-bg/95 px-3 backdrop-blur">
         {props.back && (
-          <button
-            aria-label="Back"
-            onClick={() => (props.back === true ? nav(-1) : nav(props.back as string))}
-            className="-ml-2 grid h-11 w-11 place-items-center rounded-full text-2xl text-mute active:bg-line"
-          >
-            ‹
-          </button>
+          <IconBtn label="Back" className="-ml-2 text-2xl text-mute" onClick={() => (props.back === true ? nav(-1) : nav(props.back as string))}>‹</IconBtn>
         )}
-        <h1 className="min-w-0 flex-1 truncate py-3 text-xl font-bold">{props.title}</h1>
+        <h1 className="min-w-0 flex-1 truncate text-xl font-bold">{props.title}</h1>
         {props.right}
       </header>
       <main className="space-y-3 px-3 pb-6 pt-3">{props.children}</main>
@@ -49,6 +40,18 @@ export function Btn(props: {
   if (props.to) return <Link to={props.to} className={cls} aria-label={props.label}>{props.children}</Link>;
   return (
     <button type={props.type ?? 'button'} className={cls} onClick={props.onClick} disabled={props.disabled} aria-label={props.label}>
+      {props.children}
+    </button>
+  );
+}
+
+/** A 44x44 px icon button: the minimum comfortable thumb target. */
+export function IconBtn(props: { label: string; onClick?: () => void; children: ReactNode; className?: string; disabled?: boolean }) {
+  return (
+    <button
+      type="button" aria-label={props.label} onClick={props.onClick} disabled={props.disabled}
+      className={cx('grid h-11 w-11 shrink-0 place-items-center rounded-full active:bg-line disabled:opacity-30', props.className)}
+    >
       {props.children}
     </button>
   );
@@ -110,7 +113,7 @@ export function Seg<T extends string>(props: {
           aria-checked={o.value === props.value}
           onClick={() => props.onChange(o.value)}
           className={cx(
-            'min-h-[40px] flex-1 whitespace-nowrap rounded-lg px-2 text-sm font-medium',
+            'min-h-[44px] flex-1 whitespace-nowrap rounded-lg px-2 text-sm font-medium',
             o.value === props.value ? 'bg-accent text-[rgb(var(--accent-ink))]' : 'text-mute',
           )}
         >
@@ -142,7 +145,7 @@ export function Sheet(props: { open: boolean; onClose: () => void; title: string
       >
         <div className="flex items-center gap-2 border-b border-line px-4 py-2">
           <h2 className="flex-1 truncate text-lg font-bold">{props.title}</h2>
-          <button aria-label="Close" onClick={props.onClose} className="grid h-11 w-11 place-items-center rounded-full text-xl text-mute">✕</button>
+          <IconBtn label="Close" onClick={props.onClose} className="-mr-2 text-xl text-mute">✕</IconBtn>
         </div>
         <div className="space-y-3 overflow-y-auto overscroll-contain p-4">{props.children}</div>
       </div>
@@ -168,7 +171,7 @@ export function Progress(props: { label: string; value: number; target: number; 
         className={cx('mt-1 overflow-hidden rounded-full bg-line', props.big ? 'h-3' : 'h-2')}
         role="progressbar" aria-label={props.label} aria-valuenow={Math.round(value)} aria-valuemin={0} aria-valuemax={Math.round(target)}
       >
-        <div className="h-full rounded-full bg-accent transition-[width] duration-300" style={{ width: `${pct}%` }} />
+        <div className="h-full rounded-full bg-chart transition-[width] duration-300" style={{ width: `${pct}%` }} />
       </div>
       <div className="tnum mt-0.5 text-xs text-mute">
         {left >= 0 ? `${left} ${props.unit} remaining` : `${-left} ${props.unit} over`}
