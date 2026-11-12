@@ -49,7 +49,7 @@ export default function HowCalculated() {
         <Math_>{c.proteinPerLb} × {r(c.weightLb)} lb = <b>{c.auto.protein} g</b> ({c.auto.protein * 4} kcal)</Math_>
       </Step>
       <Step n={5} title="Fat">
-        <p>{FAT_SHARE * 100}% of calories, at 9 kcal per gram:</p>
+        <p>{round(FAT_SHARE * 100, 1)}% of calories, at 9 kcal per gram:</p>
         <Math_>{c.auto.kcal} × {FAT_SHARE} ÷ 9 = <b>{c.auto.fat} g</b> ({c.auto.fat * 9} kcal)</Math_>
       </Step>
       <Step n={6} title="Carbs">

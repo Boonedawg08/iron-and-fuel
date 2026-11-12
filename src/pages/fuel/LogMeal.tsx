@@ -65,12 +65,15 @@ export default function LogMeal() {
     const d = drafts.find((x) => x.key === key);
     if (!d) return;
     const g = d.item ? resolveGrams(d.item, food, []) : { grams: d.grams ?? 100, approx: false, note: '' };
-    patch(key, { food, grams: g.grams, approx: g.approx, note: g.note, lowConfidence: false, confirmed: true, state: stateNote(food, d.item?.food ?? '') });
+    // Picking a food by hand settles the match; a guessed amount still has to be accepted.
+    patch(key, { food, grams: g.grams, approx: g.approx, note: g.note, lowConfidence: false, confirmed: false, state: stateNote(food, d.item?.food ?? '') });
     setSwapping(null);
   };
 
   const ready = drafts.filter((d) => d.food && d.grams && d.grams > 0);
-  const blocked = drafts.filter((d) => !d.food || !d.grams || (d.lowConfidence && !d.confirmed));
+  /** A doubtful match or a guessed amount is never saved until the user has explicitly accepted it. */
+  const needsCheck = (d: Draft): boolean => (d.lowConfidence || d.approx) && !d.confirmed;
+  const blocked = drafts.filter((d) => !d.food || !d.grams || needsCheck(d));
   const totals = sumNutrients(ready.map((d) => scaleNutrients(d.food!.n, d.grams!)));
 
   const save = async () => {
@@ -151,7 +154,7 @@ export default function LogMeal() {
       {drafts.length > 0 && <h2 className="pt-1 text-sm font-bold uppercase tracking-wider text-mute">Check before saving</h2>}
       {drafts.map((d) => {
         const n = d.food && d.grams ? scaleNutrients(d.food.n, d.grams) : null;
-        const needs = d.lowConfidence && !d.confirmed;
+        const needs = needsCheck(d);
         return (
           <Card key={d.key} className={cx(needs || !d.food ? 'border-warn' : '')}>
             <div className="flex items-start gap-2">
@@ -164,7 +167,8 @@ export default function LogMeal() {
 
             {d.food && (
               <div className="mt-2 flex items-center gap-2">
-                <NumField label="Grams" className="!w-24 shrink-0 text-center font-bold" value={d.grams} onChange={(grams) => patch(d.key, { grams, approx: false })} />
+                <NumField label="Grams" className="!w-24 shrink-0 text-center font-bold" value={d.grams}
+                  onChange={(grams) => patch(d.key, { grams, ...(d.approx ? { approx: false, note: 'Amount set by you.' } : {}) })} />
                 <span className="text-sm text-mute">g</span>
                 <span className="tnum flex-1 text-right text-sm">
                   <b className="text-base">{n ? Math.round(n.kcal ?? 0) : 0} kcal</b><br />
@@ -178,7 +182,11 @@ export default function LogMeal() {
             {needs && d.food && (
               <label className="mt-2 flex min-h-[44px] items-center gap-3 rounded-xl border border-warn/60 bg-warn/10 px-3 text-sm">
                 <input type="checkbox" className="h-6 w-6 shrink-0 accent-[rgb(var(--accent))]" checked={d.confirmed} onChange={(e) => patch(d.key, { confirmed: e.target.checked })} />
-                <span><b>Not sure about this match.</b> Tick to confirm it's right, or swap it.</span>
+                <span>
+                  {d.lowConfidence
+                    ? <><b>Not sure about this match.</b> Tick to confirm it's right, or swap it.</>
+                    : <><b>The amount is a guess.</b> Tick to accept it, or fix the grams.</>}
+                </span>
               </label>
             )}
             <Btn small full kind="ghost" onClick={() => setSwapping(d.key)}>{d.food ? 'Swap match' : 'Search for this food'}</Btn>

@@ -35,13 +35,14 @@ export default function GoalSetup() {
 
   const heightCm = units === 'lb' ? (f.feet !== undefined ? inToCm(f.feet * 12 + (f.inches ?? 0)) : undefined) : f.heightCm;
   const valid = !!f.weight && f.weight > 0 && !!heightCm && heightCm > 90 && heightCm < 250 && !!f.age && f.age >= 13 && f.age <= 100;
+  const paces = GOALS[f.goal].paces;
+  const pace = paces.includes(f.pace) ? f.pace : paces[0];
   const profile: Profile | null = valid ? {
     weightKg: toKg(f.weight!, units), heightCm: heightCm!, age: f.age!, sex: f.sex, activity: f.activity, goal: f.goal,
-    paceLbPerWeek: f.pace,
+    paceLbPerWeek: pace,
     overrides: Object.fromEntries(Object.entries(f.o).filter(([, v]) => typeof v === 'number' && v > 0)),
   } : null;
   const calc = profile ? calcGoals(profile) : null;
-  const paces = GOALS[f.goal].paces;
   const paceLabel = (p: number) => (units === 'lb' ? `${p} lb/week` : `${round(p / 2.2046, 2)} kg/week`);
 
   const save = async () => {
@@ -87,7 +88,7 @@ export default function GoalSetup() {
           </div></div>
         {paces.length > 1 && (
           <div><span className="label">Target pace</span>
-            <Seg label="Target pace" value={String(paces.includes(f.pace) ? f.pace : paces[0])} onChange={(v) => set({ pace: Number(v) })}
+            <Seg label="Target pace" value={String(pace)} onChange={(v) => set({ pace: Number(v) })}
               options={paces.map((p) => ({ value: String(p), label: paceLabel(p) }))} /></div>
         )}
       </Card>
@@ -122,6 +123,7 @@ export default function GoalSetup() {
         </Card>
       )}
 
+      {!profile && <p className="text-center text-sm text-mute">Enter your weight, height and age (13 to 100) to see your targets.</p>}
       <Btn kind="primary" full disabled={!profile} onClick={save}>{existing ? 'Save goals' : 'Save and start tracking'}</Btn>
       {existing && <Btn full to="/fuel/math">How this was calculated</Btn>}
     </Page>

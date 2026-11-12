@@ -48,7 +48,10 @@ describe('matching', () => {
     expect(top('asparagus')).toMatch(/^Asparagus, raw/);
   });
   it('respects raw / cooked when the user says so', () => {
-    expect(top('raw chicken breast')).toMatch(/breast.*raw/);
+    expect(top('raw chicken breast')).toMatch(/breast, skinless, boneless, meat only, raw/);
+    expect(top('raw salmon')).toMatch(/^Fish, salmon.*raw/);
+    expect(top('fried chicken')).toMatch(/fried/);
+    expect(top('smoked salmon')).toMatch(/smoked/);
     expect(top('raw white rice')).toMatch(/^Rice, white.*(raw|uncooked)/);
     expect(top('cooked broccoli')).toMatch(/^Broccoli.*cooked/);
     expect(top('cooked spinach')).toMatch(/^Spinach, cooked/);
@@ -58,16 +61,61 @@ describe('matching', () => {
     expect(top('brocolli')).toMatch(/^Broccoli/);
     expect(top('avacado')).toMatch(/^Avocados/);
   });
-  it('is confident on clear matches and not on poor ones', () => {
-    expect(isConfident(search('chicken breast')[0])).toBe(true);
-    expect(isConfident(search('raspberries')[0])).toBe(true);
-    expect(isConfident(search('dragonfruit smoothie bowl')[0])).toBe(false);
-    expect(isConfident(search('zzzzqq')[0])).toBe(false);
-    expect(isConfident(search('chicken tikka masala')[0])).toBe(false);
+  it('is confident on clear matches', () => {
+    for (const q of ['chicken breast', 'white rice', 'olive oil', 'raspberries', 'kale', 'feta cheese', 'trout',
+      'greek yogurt', 'scrambled eggs', 'eggs, scrambled', 'grilled salmon', 'steamed broccoli', 'cooked spinach']) {
+      expect(isConfident(search(q)[0]), q).toBe(true);
+    }
   });
-  it('searches custom foods too', () => {
-    setUserFoods([{ id: 'custom:1', source: 'custom', name: 'Grandma lasagna', n: { kcal: 150, protein: 9, carbs: 14, fat: 6 }, portions: [{ label: 'slice', grams: 250 }] }]);
+  it('is never confident on doubtful matches', () => {
+    // unknown food, missing words, typos, prefix guesses
+    for (const q of ['dragonfruit smoothie bowl', 'zzzzqq', 'chicken tikka masala', 'brocolli', 'turkey sandwich']) {
+      expect(isConfident(search(q)[0]), q).toBe(false);
+    }
+    // every word matches, but only as a side note of a different food
+    expect(search('minestrone')[0].head).toBe(0);
+    expect(isConfident(search('minestrone')[0])).toBe(false);
+    // a bare generic name with many varieties: the pick is arbitrary, so it must be confirmed
+    for (const q of ['cereal', 'cake', 'muffin', 'pork loin']) expect(isConfident(search(q)[0]), q).toBe(false);
+  });
+  it('does not confuse foods that share words', () => {
+    expect(top('red wine')).toMatch(/^Alcoholic beverage, wine/);
+    expect(top('red wine vinegar')).toMatch(/^Vinegar, red wine/);
+    expect(top('soy sauce')).toMatch(/^Soy sauce/);
+    expect(top('milk chocolate')).toMatch(/^Candies, milk chocolate/);
+    expect(top('chocolate milk')).toMatch(/^Milk, chocolate/);
+    expect(top('hot dog')).toMatch(/^Frankfurter/);
+    expect(top('fried rice')).toMatch(/fried rice/);
+    expect(top('potato')).toMatch(/^Potatoes/);
+    expect(top('sweet potato')).toMatch(/^Sweet potato/);
+    expect(top('peanut butter')).toMatch(/^Peanut butter/);
+    expect(top('butter')).toMatch(/^Butter/);
+    expect(top('cream cheese')).toMatch(/^Cheese, cream/);
+    expect(top('heavy cream')).toMatch(/^Cream, /);
+    expect(top('ribeye')).toMatch(/^Beef, rib eye/);
+  });
+  it('understands lean ratios and fat levels', () => {
+    expect(top('85/15 ground beef')).toMatch(/^Beef, ground, 85% lean meat \/ 15% fat/);
+    expect(top('93% lean ground turkey')).toMatch(/^Turkey, ground, 93% lean/i);
+    expect(top('low fat cottage cheese')).toMatch(/^Cheese, cottage, lowfat/);
+    expect(top('nonfat greek yogurt')).toMatch(/^Yogurt, Greek, plain, nonfat/);
+    expect(top('2% milk')).toMatch(/^Milk, reduced fat, fluid, 2% milkfat/);
+  });
+  it('prefers the unsalted, plainly cooked entry', () => {
+    expect(top('kidney beans')).toMatch(/without salt$/);
+    expect(top('cooked broccoli')).toBe('Broccoli, cooked, boiled, drained, without salt');
+  });
+  it('searches custom and previously used foods too, and trusts them', () => {
+    setUserFoods([
+      { id: 'custom:1', source: 'custom', name: 'Grandma lasagna', n: { kcal: 150, protein: 9, carbs: 14, fat: 6 }, portions: [{ label: 'slice', grams: 250 }] },
+      { id: 'off:123', source: 'off', name: 'Oreo Chocolate Sandwich Cookies', brand: 'Nabisco', n: { kcal: 480, protein: 5, carbs: 70, fat: 20 }, portions: [{ label: 'serving (3 cookies)', grams: 34 }] },
+    ]);
     expect(search('grandma lasagna')[0].food.id).toBe('custom:1');
+    expect(isConfident(search('grandma lasagna')[0])).toBe(true);
+    expect(search('oreo cookies')[0].food.id).toBe('off:123');
+    expect(isConfident(search('oreo cookies')[0])).toBe(true);
+    expect(log('2 slices grandma lasagna').grams).toBe(500);
+    expect(log('1 slice grandma lasagna').note).toMatch(/your food/);
     setUserFoods([]);
   });
 });
@@ -97,8 +145,39 @@ describe('converting amounts to grams', () => {
     expect(log('2 slices of bread').grams).toBeLessThan(80);
   });
   it('marks assumptions as approximate', () => {
-    expect(log('chicken breast').approx).toBe(true); // no amount given
     expect(log('5oz chicken breast').approx).toBe(false);
+    expect(log('2 eggs').approx).toBe(false);
+    expect(log('1 cup white rice').approx).toBe(false);
+    expect(log('a handful of almonds').approx).toBe(true); // informal measure
+    expect(log('1 cup greek yogurt').approx).toBe(true); // density borrowed from a similar food
+    expect(log('1 large chicken breast').approx).toBe(true); // no "large" portion: used a plain breast
+  });
+  it('assumes one typical serving when no amount is given, and flags it', () => {
+    const cases: [string, number, number][] = [
+      ['chicken breast', 150, 200], ['steak', 80, 90], ['rice', 150, 170], ['banana', 110, 130], ['grapes', 100, 160],
+      ['almonds', 25, 32], ['olive oil', 13, 14], ['peanut butter', 15, 34], ['milk', 240, 250], ['soy sauce', 14, 20],
+      ['eggs', 44, 56], ['lettuce', 20, 120], ['turkey breast', 80, 200],
+    ];
+    for (const [text, lo, hi] of cases) {
+      const r = log(text);
+      expect(r.approx, text).toBe(true);
+      expect(r.note, text).toMatch(/No amount given/);
+      expect(r.grams, text).toBeGreaterThanOrEqual(lo);
+      expect(r.grams, text).toBeLessThanOrEqual(hi);
+    }
+  });
+  it('handles containers and drinks sensibly', () => {
+    expect(log('glass of milk').grams).toBeGreaterThan(235);
+    expect(log('glass of milk').grams).toBeLessThan(260);
+    expect(log('1 glass red wine').grams).toBeCloseTo(147, 0); // a 5 fl oz serving, not a full cup
+    expect(log('1 beer').grams).toBe(356); // one can
+    expect(log('1 coffee').grams).toBeCloseTo(237, 0); // one cup
+    expect(log('bowl of cheerios').grams).toBeLessThan(60); // by volume, not 300 g of dry cereal
+    expect(log('1 cup couscous').grams).toBe(157); // cooked cup, not the "dry, yields" weight
+    expect(log('1 cup strawberries').grams).toBeLessThan(180); // not the pureed cup
+    expect(log('3 strips of bacon').grams).toBeCloseTo(24.3, 1);
+    expect(log('1 slice of pizza').grams).toBeLessThan(200); // never the whole package
+    expect(log('10 cherry tomatoes').grams).toBe(170);
   });
 });
 
@@ -119,6 +198,9 @@ describe('nutrition math', () => {
     const chicken = search('chicken breast')[0].food;
     expect(stateNote(chicken, 'chicken breast')).toMatch(/Assumed cooked weight/);
     expect(stateNote(search('raw chicken breast')[0].food, 'raw chicken breast')).toMatch(/raw values, as you described/);
-    expect(stateNote(search('banana')[0].food, 'banana')).toMatch(/Assumed raw/);
+    expect(stateNote(search('broccoli')[0].food, 'broccoli')).toMatch(/Assumed raw weight/);
+    // cooked vs raw is not a real question for fruit, nuts, drinks...
+    expect(stateNote(search('banana')[0].food, 'banana')).toBe('');
+    expect(stateNote(search('almonds')[0].food, 'almonds')).toBe('');
   });
 });

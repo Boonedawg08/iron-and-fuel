@@ -1,7 +1,7 @@
 import { defineConfig } from 'vitest/config';
 import react from '@vitejs/plugin-react';
 import { VitePWA } from 'vite-plugin-pwa';
-import pkg from './package.json';
+import pkg from './package.json' with { type: 'json' };
 
 // Relative base + hash routing: the same build works at a domain root (Netlify)
 // and under a sub-path (GitHub Pages: https://user.github.io/repo/).
