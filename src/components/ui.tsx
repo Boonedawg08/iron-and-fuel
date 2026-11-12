@@ -140,7 +140,7 @@ export function Sheet(props: { open: boolean; onClose: () => void; title: string
         aria-label={props.title}
         aria-modal="true"
         onClick={(e) => e.stopPropagation()}
-        className="flex max-h-[88dvh] w-full max-w-md flex-col rounded-t-3xl border-t border-line bg-card"
+        className="sheet-height flex w-full max-w-md flex-col rounded-t-3xl border-t border-line bg-card"
         style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
       >
         <div className="flex items-center gap-2 border-b border-line px-4 py-2">

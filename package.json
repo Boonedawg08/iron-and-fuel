@@ -2,7 +2,11 @@
   "name": "iron-and-fuel",
   "private": true,
   "version": "1.0.0",
+  "description": "Offline workout and nutrition tracker (installable PWA).",
   "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
   "scripts": {
     "dev": "vite",
     "build": "tsc --noEmit && vite build",

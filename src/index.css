@@ -45,6 +45,10 @@ body {
 input, select, textarea { font-size: 16px; }
 button { touch-action: manipulation; }
 
+/* dvh tracks the visible area as browser toolbars show and hide; vh is the fallback for older phones. */
+.app-height { height: 100vh; height: 100dvh; }
+.sheet-height { max-height: 88vh; max-height: 88dvh; }
+
 @layer components {
   .field {
     @apply w-full min-h-[44px] rounded-xl border border-line bg-bg px-3 py-2 text-ink

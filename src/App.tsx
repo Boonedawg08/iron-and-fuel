@@ -68,7 +68,7 @@ export default function App() {
   useEffect(() => { const t = setTimeout(() => void foodsReady().catch(() => {}), 800); return () => clearTimeout(t); }, []);
 
   return (
-    <div className="flex h-[100dvh] flex-col" style={{ paddingLeft: 'env(safe-area-inset-left)', paddingRight: 'env(safe-area-inset-right)' }}>
+    <div className="app-height flex flex-col" style={{ paddingLeft: 'env(safe-area-inset-left)', paddingRight: 'env(safe-area-inset-right)' }}>
       {/* Installed on iPhone the page runs under the status bar, whose text is always white: keep a dark strip behind it in both themes. */}
       <div aria-hidden className="shrink-0 bg-[#0b0d10]" style={{ height: 'env(safe-area-inset-top)' }} />
       <ScrollReset />
