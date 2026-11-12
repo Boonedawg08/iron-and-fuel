@@ -7,10 +7,14 @@ import RoutineEdit from './pages/lift/RoutineEdit';
 import Session from './pages/lift/Session';
 import { ExerciseStats, History, WorkoutDetail } from './pages/lift/History';
 import Settings from './pages/Settings';
-
-function Placeholder({ name }: { name: string }) {
-  return <div className="p-6 text-xl font-bold">{name}</div>;
-}
+import FuelHome from './pages/fuel/FuelHome';
+import GoalSetup from './pages/fuel/GoalSetup';
+import HowCalculated from './pages/fuel/HowCalculated';
+import LogMeal from './pages/fuel/LogMeal';
+import CustomFood from './pages/fuel/CustomFood';
+import Weekly from './pages/fuel/Weekly';
+import WeightLog from './pages/fuel/WeightLog';
+import { foodsReady } from './lib/foodStore';
 
 function Tab(props: { to: string; label: string; icon: string }) {
   return (
@@ -38,6 +42,9 @@ export default function App() {
     return () => mq.removeEventListener('change', on);
   }, [settings.theme]);
 
+  // Warm the food database in the background so logging is instant.
+  useEffect(() => { const t = setTimeout(() => void foodsReady().catch(() => {}), 800); return () => clearTimeout(t); }, []);
+
   return (
     <div className="flex h-full flex-col">
       <div className="flex-1 overflow-y-auto overflow-x-hidden" id="scroll">
@@ -50,7 +57,13 @@ export default function App() {
           <Route path="/lift/workout/:id" element={<WorkoutDetail />} />
           <Route path="/lift/exercise/:id" element={<ExerciseStats />} />
           <Route path="/settings" element={<Settings />} />
-          <Route path="/fuel/*" element={<Placeholder name="FUEL" />} />
+          <Route path="/fuel" element={<FuelHome />} />
+          <Route path="/fuel/goals" element={<GoalSetup />} />
+          <Route path="/fuel/math" element={<HowCalculated />} />
+          <Route path="/fuel/log" element={<LogMeal />} />
+          <Route path="/fuel/food/:id" element={<CustomFood />} />
+          <Route path="/fuel/week" element={<Weekly />} />
+          <Route path="/fuel/weight" element={<WeightLog />} />
           <Route path="*" element={<Navigate to="/lift" replace />} />
         </Routes>
       </div>
