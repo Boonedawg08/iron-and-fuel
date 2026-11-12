@@ -1,0 +1,52 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --bg: 244 245 247;
+  --card: 255 255 255;
+  --line: 222 225 231;
+  --ink: 17 20 24;
+  --mute: 95 103 115;
+  --accent: 194 65 12;
+  --accent-ink: 255 255 255;
+  --good: 4 120 87;
+  --warn: 161 98 7;
+  --bad: 200 30 30;
+  color-scheme: light;
+}
+.dark {
+  --bg: 11 13 16;
+  --card: 22 26 32;
+  --line: 44 50 60;
+  --ink: 240 242 245;
+  --mute: 150 158 172;
+  --accent: 249 115 22;
+  --accent-ink: 20 10 2;
+  --good: 52 211 153;
+  --warn: 251 191 36;
+  --bad: 248 113 113;
+  color-scheme: dark;
+}
+
+html, body, #root { height: 100%; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  @apply bg-bg text-ink antialiased;
+  font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  overflow-x: hidden;
+  overscroll-behavior-y: none;
+  -webkit-tap-highlight-color: transparent;
+}
+/* 16px minimum stops iOS Safari zooming in when an input gets focus */
+input, select, textarea { font-size: 16px; }
+button { touch-action: manipulation; }
+
+@layer components {
+  .field {
+    @apply w-full min-h-[44px] rounded-xl border border-line bg-bg px-3 py-2 text-ink
+      placeholder:text-mute focus:outline-none focus:ring-2 focus:ring-accent;
+  }
+  .label { @apply mb-1 block text-sm font-medium text-mute; }
+  .tnum { font-variant-numeric: tabular-nums; }
+}
