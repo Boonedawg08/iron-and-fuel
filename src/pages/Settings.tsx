@@ -52,7 +52,11 @@ export default function Settings() {
 
       <Card className="space-y-3">
         <h2 className="font-bold">Online food search</h2>
-        <p className="text-sm text-mute">Branded foods are searched on USDA FoodData Central and Open Food Facts when you're online. The shared demo key is heavily rate-limited; a free personal key from api.data.gov (fdc.nal.usda.gov/api-key-signup) makes it reliable.</p>
+        <p className="text-sm text-mute">
+          Branded and packaged foods are searched on USDA FoodData Central and Open Food Facts when you're online, and anything you log is kept for offline use.
+          USDA's shared demo key only allows a few searches an hour, so a free personal key makes it reliable.
+        </p>
+        <a href="https://fdc.nal.usda.gov/api-key-signup" target="_blank" rel="noreferrer" className="flex min-h-[44px] items-center font-medium text-accent">Get a free USDA API key ↗</a>
         <label className="label" htmlFor="fdckey">USDA API key (optional)</label>
         <input id="fdckey" className="field" autoCapitalize="off" autoCorrect="off" spellCheck={false} placeholder="DEMO_KEY"
           value={s.fdcApiKey} onChange={(e) => void saveSettings({ fdcApiKey: e.target.value.trim() })} />

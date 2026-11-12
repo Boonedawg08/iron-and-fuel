@@ -19,17 +19,25 @@ async function getJson(url: string, timeoutMs = 12000): Promise<unknown> {
   } finally { clearTimeout(t); }
 }
 
-interface FdcFood {
+/** A food from /v1/foods/search. Branded foods carry nutrient values per 100 g (or per 100 ml). */
+export interface FdcFood {
   fdcId: number; description: string; brandName?: string; brandOwner?: string; servingSize?: number; servingSizeUnit?: string;
-  householdServingFullText?: string; foodNutrients?: { nutrientNumber?: string; value?: number }[];
+  householdServingFullText?: string;
+  // Search results use nutrientNumber/value; the abridged food format uses number/amount. Accept both.
+  foodNutrients?: { nutrientNumber?: string; number?: string | number; value?: number; amount?: number }[];
 }
 export function mapFdcFood(f: FdcFood): Food | null {
   const n: Nutrients = {};
+  const byNumber = new Map<string, number>();
   for (const fn of f.foodNutrients ?? []) {
-    const key = fn.nutrientNumber ? FDC_MAP[fn.nutrientNumber] : undefined;
-    if (key && typeof fn.value === 'number' && n[key] === undefined) n[key] = fn.value;
+    const num = String(fn.nutrientNumber ?? fn.number ?? '');
+    const val = fn.value ?? fn.amount;
+    if (num && typeof val === 'number' && !byNumber.has(num)) byNumber.set(num, val);
   }
-  if (n.kcal === undefined) return null;
+  for (const [num, key] of Object.entries(FDC_MAP)) if (byNumber.has(num)) n[key] = byNumber.get(num);
+  // Some entries only list energy under the Atwater factor codes.
+  if (n.kcal === undefined) n.kcal = byNumber.get('958') ?? byNumber.get('957');
+  if (!f.fdcId || !f.description || n.kcal === undefined) return null;
   const portions: Portion[] = [];
   const unit = (f.servingSizeUnit ?? '').toLowerCase();
   if (f.servingSize && (unit === 'g' || unit === 'grm' || unit === 'ml' || unit === 'mlt')) {
@@ -46,10 +54,11 @@ export async function searchFdc(query: string, apiKey: string): Promise<Food[]> 
   return (json.foods ?? []).map(mapFdcFood).filter((f): f is Food => f !== null);
 }
 
-interface OffProduct {
+export interface OffProduct {
   code?: string; product_name?: string; brands?: string; serving_size?: string; serving_quantity?: number | string;
   nutriments?: Record<string, number | string | undefined>;
 }
+/** A product from Open Food Facts (search or barcode lookup). Nutriments are per 100 g; minerals are in grams. */
 export function mapOffProduct(p: OffProduct): Food | null {
   const nm = p.nutriments ?? {};
   const num = (k: string): number | undefined => {

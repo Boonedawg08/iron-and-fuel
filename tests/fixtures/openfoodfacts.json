@@ -1,0 +1,53 @@
+{
+ "_source": "A real product response from the Open Food Facts API (world.openfoodfacts.org/api/v2/product/<barcode>.json), trimmed to the fields the app reads. Data: Open Database License. The \"search\" object wraps the same product in the envelope that /cgi/search.pl returns (count, page, page_size, products).",
+ "product": {
+  "code": "3017620422003",
+  "status": 1,
+  "product": {
+   "code": "3017620422003",
+   "product_name": "Nutella",
+   "brands": "Ferrero, Nutella",
+   "serving_size": null,
+   "serving_quantity": null,
+   "nutriments": {
+    "energy-kcal_100g": 539,
+    "energy_100g": 2252,
+    "proteins_100g": 6.3,
+    "carbohydrates_100g": 57.5,
+    "fat_100g": 30.9,
+    "fiber_100g": 0,
+    "sugars_100g": 56.3,
+    "saturated-fat_100g": 10.6,
+    "sodium_100g": 0.0428,
+    "salt_100g": 0.107
+   }
+  }
+ },
+ "search": {
+  "count": 1,
+  "page": 1,
+  "page_count": 1,
+  "page_size": 20,
+  "products": [
+   {
+    "code": "3017620422003",
+    "product_name": "Nutella",
+    "brands": "Ferrero, Nutella",
+    "serving_size": null,
+    "serving_quantity": null,
+    "nutriments": {
+     "energy-kcal_100g": 539,
+     "energy_100g": 2252,
+     "proteins_100g": 6.3,
+     "carbohydrates_100g": 57.5,
+     "fat_100g": 30.9,
+     "fiber_100g": 0,
+     "sugars_100g": 56.3,
+     "saturated-fat_100g": 10.6,
+     "sodium_100g": 0.0428,
+     "salt_100g": 0.107
+    }
+   }
+  ]
+ }
+}
